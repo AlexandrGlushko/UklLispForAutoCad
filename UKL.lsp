@@ -1,5 +1,5 @@
 ;===================================================================================================
-;‘ункци€ проставлени€ уклонов V-0.4
+;‘ункци€ проставлени€ уклонов V-0.1
 ;===================================================================================================
 (defun c:ukl()
 	(progn
@@ -385,10 +385,10 @@
 
 (defun Calc_Grad(gType /  tmp)
 	(cond
-		((= gType 1) (setq Grad (rtos (abs (/ Elev Dist))2 3)))				;мм на метр
+		((= gType 1) (setq Grad (rtos (abs (/ Elev Dist))2 4)))				;мм на метр
 		((= gType 2) (setq Grad (rtos (abs (/ Elev Dist))2 2)))				;см на метр
-		((= gType 3) (setq Grad (strcat (rtos (abs (* (/ Elev Dist) 100))2 2)"%")))	;проценты %
-		((= gType 4) (setq Grad (strcat (rtos (abs (* (/ Elev Dist) 1000))2 2)"Й")))	;промили Й
+		((= gType 3) (setq Grad (strcat (rtos (abs (* (/ Elev Dist) 100))2 3)"%")))	;проценты %
+		((= gType 4) (setq Grad (strcat (rtos (abs (* (/ Elev Dist) 1000))2 4)"Й")))	;промили Й
 		((= gType 5)
 				(setq tmp (fix (abs (/ Dist Elev))))				;соотношение
 				(setq Grad (strcat "1:" (rtos tmp 2 0)))			; 1:N
