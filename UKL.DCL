@@ -16,10 +16,10 @@ dc_ukl: dialog {label="Уклон";
 		
 		}//boxed_radio_column
 				:boxed_radio_row {label="Координата по которой считается разница высот";
-							:radio_button {label="H"; key="prH"; value="1";}
-							:radio_button {label="X"; key="prX"; value="0";}
-							:radio_button {label="Y"; key="prY"; value="0";}
-							:radio_button {label="XY"; key="prXY"; value="0";}
+							:radio_button {label="H"; mnemonic="По высоте"; key="prH"; value="1";}
+							:radio_button {label="X"; mnemonic="По Х AutoCad"; key="prX"; value="0";}
+							:radio_button {label="Y"; mnemonic="По Y AutoCad"; key="prY"; value="0";}
+							:radio_button {label="XY"; mnemonic="По XY AutoCad";key="prXY"; value="0";}
 				}//boxed_row
 				:boxed_radio_row {label="Вид стрелки";
 							:radio_button {label=" <"; key="a1"; value="0";}
