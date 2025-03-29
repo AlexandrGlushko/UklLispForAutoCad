@@ -1,6 +1,100 @@
 ;===================================================================================================
-;Функция проставления уклонов V-0.1
+; Создание и сожраниени диалогового окна в файл "ukl.dcl"
 ;===================================================================================================
+
+(setq ukl_dcl (vl-filename-mktemp "ukl.dcl"))
+  (setq dcl_text (strcat
+      "dc_ukl: dialog {label=\"Уклон\";
+	:row{
+	:column {
+	:boxed_radio_column{label=\"Текст и цвет\";
+	 :text {label=\"Слой                  Имя слоя     Цвет\";}
+	 :row {
+		:popup_list{list=\"Создать...\"; width=12; key=\"ListLayer\";}
+		:edit_box {key=\"LayerName\"; value=\"Уклон\";}
+		:image_button {width=4; key=\"LayerColor\"; color=7;}
+		}
+		:text {label=\"Стиль текста                     Высота\";}
+		:row {
+			:popup_list {list=\"\"; width=20; key=\"ListSText\"; }
+			:edit_box {edit_width=3; key=\"TextHeight\"; value=\"0.01\";}
+			}
+		
+		}
+			:boxed_radio_row {label=\"Координата по которой считается разница высот\";
+			:radio_button {label=\"H\"; key=\"prH\"; value=\"1\";}
+			:radio_button {label=\"X\"; key=\"prX\"; value=\"0\";}
+			:radio_button {label=\"Y\"; key=\"prY\"; value=\"0\";}
+			:radio_button {label=\"XY\"; key=\"prXY\"; value=\"0\";}
+		}
+			:boxed_radio_row {label=\"Вид стрелки\";
+			:radio_button {label=\" <\"; key=\"a1\"; value=\"0\";}
+			:radio_button {label=\" <---\"; key=\"a2\"; value=\"1\";}
+		}
+	}
+	:boxed_radio_column{label=\"Точность\";
+		:radio_button {label=\"мм\"; 	key=\"g1\"; value=\"1\";}
+		:radio_button {label=\"см\"; 	key=\"g2\"; value=\"0\";}
+		:radio_button {label=\"%\"; 	key=\"g3\"; value=\"0\";}
+		:radio_button {label=\"‰\"; 	key=\"g4\"; value=\"0\";}
+		:radio_button {label=\"1:5\"; key=\"g5\"; value=\"0\";}
+	}
+	}
+	ok_cancel;
+	}"
+    ))
+ (setq fd (open ukl_dcl "w"))
+ (princ dcl_text fd)
+ (close fd)
+
+;===================================================================================================
+; Функция вызова основного диалогового окна
+;===================================================================================================
+(defun Dialog()
+  ;(setq name_dcl "UKL.dcl")
+	(setq dcl_id (load_dialog ukl_dcl))
+	(if (= dcl_id -1)
+	  (progn
+	  (print) (princ "\nФайл диалогово окна не найден")
+	  (exit)
+	  )
+	);if dcl_id
+  	(setq new_dial (new_dialog "dc_ukl" dcl_id))
+	  	(if (null new_dial)
+			  (progn
+					(print "Не смог загрузить диалоговое окно")
+					(exit)
+			  )
+			);End if
+	(Initialization)
+			(action_tile "ListLayer" "(Input_Layer (get_tile \"ListLayer\"))")
+			(action_tile "LayerName" "(Input_Layer_Name (get_tile \"LayerName\"))")
+			(action_tile "LayerColor" "(Enter_Color_Take)")
+			(action_tile "ListSText" "(Input_SText (get_tile \"ListSText\"))")
+			(action_tile "TextHeight" "(Input_HText (get_tile \"TextHeight\"))")
+			(action_tile "g1" "(if (= (get_tile \"g1\") \"1\")(setq S_Grad 1))")
+			(action_tile "g2" "(if (= (get_tile \"g2\") \"1\")(setq S_Grad 2))")
+			(action_tile "g3" "(if (= (get_tile \"g3\") \"1\")(setq S_Grad 3))")
+			(action_tile "g4" "(if (= (get_tile \"g4\") \"1\")(setq S_Grad 4))")
+			(action_tile "g5" "(if (= (get_tile \"g5\") \"1\")(setq S_Grad 5))")
+			(action_tile "prH" "(if (= (get_tile \"prH\") \"1\")(setq S_prHXY 1))")
+ 			(action_tile "prX" "(if (= (get_tile \"prX\") \"1\")(setq S_prHXY 2))")
+			(action_tile "prY" "(if (= (get_tile \"prY\") \"1\")(setq S_prHXY 3))")
+  			(action_tile "prXY" "(if (= (get_tile \"prXY\") \"1\")(setq S_prHXY 4))")
+			(action_tile "a1" "(if (= (get_tile \"a1\") \"1\")(setq S_Arrow 1))")
+			(action_tile "a2" "(if (= (get_tile \"a2\") \"1\")(setq S_Arrow 2))")
+			(action_tile "accept" "(done_dialog 1)")
+			(action_tile "cancel" "(done_dialog 2)")
+	
+	(if (= (start_dialog) 1 ) (Enter_Point))
+	(if (= (start_dialog) 2 ) (Exit))
+	(unload_dialog dcl_id)
+); End Dialog
+
+;===================================================================================================
+; Функция проставления уклонов V-0.1
+;===================================================================================================
+
 (defun c:ukl()
 	(progn
 	  	(setq C_WCS (getvar "WORLDUCS"))		;Текущая система координта 1 МСК 0 ПСК
@@ -39,7 +133,6 @@
 (defun UCS_to_WCS (point / params)
   
   (setq params (GetUCSParams))
-  ;(UCS_to_WCS point (nth 0 params) (nth 1 params) (nth 2 params))
   (setq x (car point))
   (setq y (cadr point))
   (setq z (caddr point))
@@ -54,7 +147,6 @@
 ;Пересчет из МСК в ПСК
 (defun WCS_to_UCS (point / params)
   (setq params (GetUCSParams))
-  ;(WCS_to_UCS point (nth 0 params) (nth 1 params) (nth 2 params))
   (setq dx (- (car point) (car (nth 0 params))))
   (setq dy (- (cadr point) (cadr (nth 0 params))))
   (setq dz (- (caddr point) (caddr (nth 0 params))))
@@ -204,9 +296,6 @@
 	(if(= S_Arrow 1)
 		(progn
 			(setq PosText (cdr (assoc 11 (entget (entlast)))))
-		  	;(if (= C_WCS 0)				
-	  		;	(progn (setq PosText (UCS_to_WCS PosText))) ;Пересчет координат из ПСК в МСК
-	 		;)
 			;Длина отступа от центра текста
 			(setq DrawDist (/ H_text 3))
 			;Расчет коориднат знака уклона
@@ -236,9 +325,6 @@
 	(if(= S_Arrow 2)
 		(progn
 			(setq PosText (cdr (assoc 11 (entget (entlast)))))
-		  	;(if (= C_WCS 0)				
-	  		;	(progn (setq PosText (UCS_to_WCS PosText))) ;Пересчет координат из ПСК в МСК
-	 		;)
 			;Длина отступа от центра текста
 			;Расчет коориднат знака уклона
 			;        		LP2
@@ -281,49 +367,6 @@
 	 );if 
 );Print_Grand
 
-;===================================================================================================
-; Функция вызова основного диалогового окна
-;===================================================================================================
-(defun Dialog()
-  (setq name_dcl "UKL.dcl")
-	(setq dcl_id (load_dialog name_dcl))
-	(if (= dcl_id -1)
-	  (progn
-	  (print) (princ "Файл ") (princ name_dcl) (princ " не найден") (print)
-	  (exit)
-	  )
-	);if dcl_id
-  	(setq new_dial (new_dialog "dc_ukl" dcl_id))
-	  	(if (null new_dial)
-			  (progn
-					(print "Не смог загрузить диалоговое окно")
-					(exit)
-			  )
-			);End if
-	(Initialization)
-			(action_tile "ListLayer" "(Input_Layer (get_tile \"ListLayer\"))")
-			(action_tile "LayerName" "(Input_Layer_Name (get_tile \"LayerName\"))")
-			(action_tile "LayerColor" "(Enter_Color_Take)")
-			(action_tile "ListSText" "(Input_SText (get_tile \"ListSText\"))")
-			(action_tile "TextHeight" "(Input_HText (get_tile \"TextHeight\"))")
-			(action_tile "g1" "(if (= (get_tile \"g1\") \"1\")(setq S_Grad 1))")
-			(action_tile "g2" "(if (= (get_tile \"g2\") \"1\")(setq S_Grad 2))")
-			(action_tile "g3" "(if (= (get_tile \"g3\") \"1\")(setq S_Grad 3))")
-			(action_tile "g4" "(if (= (get_tile \"g4\") \"1\")(setq S_Grad 4))")
-			(action_tile "g5" "(if (= (get_tile \"g5\") \"1\")(setq S_Grad 5))")
-			(action_tile "prH" "(if (= (get_tile \"prH\") \"1\")(setq S_prHXY 1))")
- 			(action_tile "prX" "(if (= (get_tile \"prX\") \"1\")(setq S_prHXY 2))")
-			(action_tile "prY" "(if (= (get_tile \"prY\") \"1\")(setq S_prHXY 3))")
-  			(action_tile "prXY" "(if (= (get_tile \"prXY\") \"1\")(setq S_prHXY 4))")
-			(action_tile "a1" "(if (= (get_tile \"a1\") \"1\")(setq S_Arrow 1))")
-			(action_tile "a2" "(if (= (get_tile \"a2\") \"1\")(setq S_Arrow 2))")
-			(action_tile "accept" "(done_dialog 1)")
-			(action_tile "cancel" "(done_dialog 2)")
-	
-	(if (= (start_dialog) 1 ) (Enter_Point))
-	(if (= (start_dialog) 2 ) (Exit))
-	(unload_dialog dcl_id)
-); End Dialog
 
 ;===================================================================================================
 ;Функция ввода и проверки начальных значений
