@@ -3,6 +3,7 @@
 ;===================================================================================================
 (defun c:ukl()
 	(progn
+	  	(setq C_WCS (getvar "WORLDUCS"))		;Текущая система координта 1 МСК 0 ПСК
 		(setq S_text "Standard")			;Стиль текста
 		(setq H_text 0.01)				;Высота текста
 		(setq C_layr 7)					;Цвет слоя
@@ -16,6 +17,70 @@
 		(Dialog)					;Загрузка диалогового окна
 	); progn
 );defun c:ukl
+
+;===================================================================================================
+; Пересчет координат из МСК в ПСК и обратно
+;===================================================================================================
+
+;Получение параметров текущей системы координат
+(defun GetUCSParams (/ origin xdir ydir angx angy)
+  (setq origin (getvar "UCSORG"))
+  (setq xdir (getvar "UCSXDIR"))
+  (setq ydir (getvar "UCSYDIR"))
+  
+  ;Вычисляем углы поворота осей
+  (setq angx (atan (cadr xdir) (car xdir))) ; Угол оси X ПСК
+  (setq angy (atan (cadr ydir) (car ydir))) ; Угол оси Y ПСК
+  
+  (list origin angx angy)
+)
+
+;Пересчет из ПСК в МСК
+(defun UCS_to_WCS (point / params)
+  
+  (setq params (GetUCSParams))
+  ;(UCS_to_WCS point (nth 0 params) (nth 1 params) (nth 2 params))
+  (setq x (car point))
+  (setq y (cadr point))
+  (setq z (caddr point))
+  ;Вычисление координат в МСК
+  (list
+    (+ (car (nth 0 params)) (* x (cos (nth 1 params))) (* y (cos (nth 2 params))))
+    (+ (cadr (nth 0 params)) (* x (sin (nth 1 params))) (* y (sin (nth 2 params))))
+    (+ (caddr (nth 0 params)) z)
+  )
+)
+
+;Пересчет из МСК в ПСК
+(defun WCS_to_UCS (point / params)
+  (setq params (GetUCSParams))
+  ;(WCS_to_UCS point (nth 0 params) (nth 1 params) (nth 2 params))
+  (setq dx (- (car point) (car (nth 0 params))))
+  (setq dy (- (cadr point) (cadr (nth 0 params))))
+  (setq dz (- (caddr point) (caddr (nth 0 params))))
+  
+  (setq sinx (sin (nth 1 params)))
+  (setq cosx (cos (nth 1 params)))
+  (setq siny (sin (nth 2 params)))
+  (setq cosy (cos (nth 2 params)))
+  
+  ;Определитель матрицы преобразования
+  (setq det (- (* cosx siny) (* sinx cosy)))
+  
+  (if (/= det 0.0)
+    (progn
+      ;Вычисляем координаты в ПСК
+      (setq xp (/ (- (* dy cosy) (* dx siny)) det))
+      (setq yp (/ (- (* dx cosx) (* dy sinx)) det))
+      (list xp yp dz)
+    )
+    ;Если определитель равен нулю, оси параллеьны
+    (progn
+      (princ "\nОшибка: оси X и Y параллельны")
+      nil
+    )
+  )
+)
 
 ;===================================================================================================
 ;Указание точек для расчета уклона
@@ -57,6 +122,10 @@
 	;Определение углов поворота текста и направление указания наклона
 	;в зависимоти от первышения (Elev) и разности координат (dX, dY)
 	;Первая точка ниже вторая више
+  	(if (= C_WCS 0)				;Пересчет координат из МСК в ПСК
+	  	(progn (WCS_to_UCS P1))
+	  	(progn (WCS_to_UCS P2))
+	  )
 	(if (< Elev 0)
 		(progn (setq FirP P1) (setq SecP P2))
 		(progn (setq FirP P2) (setq SecP P1))
@@ -109,11 +178,16 @@
 ;===================================================================================================
 ;Вставка текста
 ;===================================================================================================
-	(entmake (list
+	(setq XYZ (getpoint "Точка вставки "))
+  	(if (= C_WCS 0)				
+		(progn (setq XYZ (UCS_to_WCS XYZ))) ;Пересчет координат из ПСК в МСК
+	)
+	;DXF Грппа вставки текста
+  	(entmake (list
 						(cons 0 "TEXT")
 						(cons 8 N_layr)
 						(cons 62 C_layr)
-						(cons 10 (setq XYZ (getpoint "Точка вставки ")))
+						(cons 10 XYZ)
 						(cons 40 H_text)
 						(cons 50 TextAngle)
 						(cons 7 S_text)
@@ -129,7 +203,10 @@
 ;===================================================================================================
 	(if(= S_Arrow 1)
 		(progn
-			(setq PosText (cdr (assoc 10 (entget (entlast)))))
+			(setq PosText (cdr (assoc 11 (entget (entlast)))))
+		  	;(if (= C_WCS 0)				
+	  		;	(progn (setq PosText (UCS_to_WCS PosText))) ;Пересчет координат из ПСК в МСК
+	 		;)
 			;Длина отступа от центра текста
 			(setq DrawDist (/ H_text 3))
 			;Расчет коориднат знака уклона
@@ -159,6 +236,9 @@
 	(if(= S_Arrow 2)
 		(progn
 			(setq PosText (cdr (assoc 11 (entget (entlast)))))
+		  	;(if (= C_WCS 0)				
+	  		;	(progn (setq PosText (UCS_to_WCS PosText))) ;Пересчет координат из ПСК в МСК
+	 		;)
 			;Длина отступа от центра текста
 			;Расчет коориднат знака уклона
 			;        		LP2
@@ -357,7 +437,7 @@
 	  	(alert "Введите ВЫСОТУ текста")		;Флаг запрета 
 	  );progn
 	  (progn
-			(setq H_text (atof hText))				;Присвоить выстоту текста
+		(setq H_text (atof hText))		;Присвоить выстоту текста
 	  );progn
 	);if
 );End Input_Diam
@@ -368,14 +448,14 @@
 
 (defun New_Layer(N_layr C_layr)
 	(entmake (list
-						(cons 0 "LAYER")
-						(cons 100 "AcDbSymbolTableRecord")
-						(cons 100 "AcDbLayerTableRecord")
-						(cons 2 N_layr)
-						(cons 70 0)
-						(cons 62 C_layr)
-						(cons 6 "Continuous")
-					 );list
+			(cons 0 "LAYER")
+			(cons 100 "AcDbSymbolTableRecord")
+			(cons 100 "AcDbLayerTableRecord")
+			(cons 2 N_layr)
+			(cons 70 0)
+			(cons 62 C_layr)
+			(cons 6 "Continuous")
+		);list
 	);entmake
 );End New_Layer
 
