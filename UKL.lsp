@@ -1,5 +1,5 @@
 ;===================================================================================================
-; Создание и сожраниени диалогового окна в файл "ukl.dcl"
+; Создание временного файла и загрузка диалогового окна в файл "ukl.dcl"
 ;===================================================================================================
 
 (setq ukl_dcl (vl-filename-mktemp "ukl.dcl"))
@@ -43,6 +43,7 @@
 	ok_cancel;
 	}"
     ))
+ ;Открытие файла "ukl.dcl" запись в него текста закрытие файла
  (setq fd (open ukl_dcl "w"))
  (princ dcl_text fd)
  (close fd)
@@ -51,21 +52,21 @@
 ; Функция вызова основного диалогового окна
 ;===================================================================================================
 (defun Dialog()
-  ;(setq name_dcl "UKL.dcl")
+  	
 	(setq dcl_id (load_dialog ukl_dcl))
-	(if (= dcl_id -1)
-	  (progn
-	  (print) (princ "\nФайл диалогово окна не найден")
-	  (exit)
-	  )
+		(if (= dcl_id -1)
+	  	(progn
+	  	(print) (princ "\nФайл диалогово окна не найден")
+	  	(exit))
 	);if dcl_id
+  	
   	(setq new_dial (new_dialog "dc_ukl" dcl_id))
-	  	(if (null new_dial)
-			  (progn
-					(print "Не смог загрузить диалоговое окно")
-					(exit)
-			  )
-			);End if
+	  (if (null new_dial)
+		(progn
+		(print "Не смог загрузить диалоговое окно")
+		(exit))
+	 );End if
+  	; Инициализация начальных переменных
 	(Initialization)
 			(action_tile "ListLayer" "(Input_Layer (get_tile \"ListLayer\"))")
 			(action_tile "LayerName" "(Input_Layer_Name (get_tile \"LayerName\"))")
@@ -85,14 +86,15 @@
 			(action_tile "a2" "(if (= (get_tile \"a2\") \"1\")(setq S_Arrow 2))")
 			(action_tile "accept" "(done_dialog 1)")
 			(action_tile "cancel" "(done_dialog 2)")
-	
 	(if (= (start_dialog) 1 ) (Enter_Point))
 	(if (= (start_dialog) 2 ) (Exit))
+  	;Выгрузка диалога и удаление временного файла диалогового окна
 	(unload_dialog dcl_id)
+  	(vl-file-delete ukl_dcl)
 ); End Dialog
 
 ;===================================================================================================
-; Функция проставления уклонов V-0.1
+; Функция проставления уклонов V-1.0
 ;===================================================================================================
 
 (defun c:ukl()
@@ -107,13 +109,14 @@
 		(setq Grad "")					;Уклон
 		(setq S_Grad 1)					;Стиль отоборажения уклона
 	  	(setq S_prHXY 1)				;Координата для расчета уклона
-		(setq S_Arrow 2)				;Стиль стрелкисм
+		(setq S_Arrow 2)				;Стиль стрелки
 		(Dialog)					;Загрузка диалогового окна
 	); progn
 );defun c:ukl
 
 ;===================================================================================================
 ; Пересчет координат из МСК в ПСК и обратно
+; 
 ;===================================================================================================
 
 ;Получение параметров текущей системы координат
@@ -125,7 +128,7 @@
   ;Вычисляем углы поворота осей
   (setq angx (atan (cadr xdir) (car xdir))) ; Угол оси X ПСК
   (setq angy (atan (cadr ydir) (car ydir))) ; Угол оси Y ПСК
-  
+  ;Списо пареметров
   (list origin angx angy)
 )
 
@@ -175,6 +178,16 @@
 )
 
 ;===================================================================================================
+; Получение угла поворота текущей ПСК в радианах относительно оси Х МСК
+;===================================================================================================
+
+(defun Get_UCS_Rot_Angle ()
+  (setq xdir (getvar "UCSXDIR")) ;Направление оси Х в ПСК относительно МСК
+  (setq xdir_xy (list (car xdir) (cadr xdir))) ; Координаты Х Y для вычисления угла
+  (atan (cadr xdir_xy) (car xdir_xy)) ; Угол между осью Х ПСК и осью Х МСК
+)
+
+;===================================================================================================
 ;Указание точек для расчета уклона
 ;===================================================================================================
 (defun Enter_Point()
@@ -214,9 +227,12 @@
 	;Определение углов поворота текста и направление указания наклона
 	;в зависимоти от первышения (Elev) и разности координат (dX, dY)
 	;Первая точка ниже вторая више
-  	(if (= C_WCS 0)				;Пересчет координат из МСК в ПСК
-	  	(progn (WCS_to_UCS P1))
-	  	(progn (WCS_to_UCS P2))
+  	(if (= C_WCS 0)				
+	  	(progn
+		  (WCS_to_UCS P1)		;Пересчет координат из МСК в ПСК точка 1
+	  	  (WCS_to_UCS P2)		;Пересчет координат из МСК в ПСК точка 2
+		  (setq RotAngleUCS (Get_UCS_Rot_Angle)) ;Получение угла поворота ПСК отностельно МСК
+	  	)
 	  )
 	(if (< Elev 0)
 		(progn (setq FirP P1) (setq SecP P2))
@@ -231,6 +247,9 @@
 			(progn
 				(print (strcat "Певая четверть"))
 				(setq TextAngle (angle FirP SecP))
+			  	(if (= C_WCS 0)
+				  (setq TextAngle (+ TextAngle RotAngleUCS))
+				)
 				(setq DrawAngle (- TextAngle PI))
 				(setq ForLP3 (- DrawAngle (/ PI 2)))
 				(setq PosLP3 "N")
@@ -241,6 +260,9 @@
 			(progn
 				(print (strcat "Вторая четверть"))
 				(setq TextAngle (angle FirP SecP))
+			  	(if (= C_WCS 0)
+				  (setq TextAngle (+ TextAngle RotAngleUCS))
+				)
 				(setq DrawAngle (- TextAngle PI))
 				(setq ForLP3 (- DrawAngle (/ PI 2)))
 				(setq PosLP3 "N")
@@ -251,6 +273,9 @@
 			(progn
 				(print (strcat "Третья четверть"))
 				(setq TextAngle (angle SecP FirP))
+			  	(if (= C_WCS 0)
+				  (setq TextAngle (+ TextAngle RotAngleUCS))
+				)
 				(setq DrawAngle (+ TextAngle PI))
 				(setq ForLP3 (- DrawAngle (/ PI 2)))
 				(setq PosLP3 "R")
@@ -261,6 +286,9 @@
 			(progn
 				(print (strcat "Четвертая четверть"))
 				(setq TextAngle (angle SecP FirP))
+			  	(if (= C_WCS 0)
+				  (setq TextAngle (+ TextAngle RotAngleUCS))
+				)
 				(setq DrawAngle (+ TextAngle PI))
 				(setq ForLP3 (- DrawAngle (/ PI 2)))
 				(setq PosLP3 "R")
@@ -270,7 +298,8 @@
 ;===================================================================================================
 ;Вставка текста
 ;===================================================================================================
-	(setq XYZ (getpoint "Точка вставки "))
+	; Вставка текста отклонения 
+  	(setq XYZ (getpoint "Точка вставки "))
   	(if (= C_WCS 0)				
 		(progn (setq XYZ (UCS_to_WCS XYZ))) ;Пересчет координат из ПСК в МСК
 	)
@@ -310,15 +339,15 @@
 			);if PosLP3
 			;Вставка знака уклона
 			(entmake (list
-								(cons 0 "LWPOLYLINE")
-								(cons 8 N_layr)
-								(cons 62 C_layr)
-								(cons 100 "AcDbEntity")
-								(cons 100 "AcDbPolyline")
-								(cons 90 3)
-								(list 10 (car FP1) (cadr FP1))
-								(list 10 (car FP2) (cadr FP2))
-								(list 10 (car FP3) (cadr FP3))						
+					(cons 0 "LWPOLYLINE")
+					(cons 8 N_layr)
+					(cons 62 C_layr)
+					(cons 100 "AcDbEntity")
+					(cons 100 "AcDbPolyline")
+					(cons 90 3)
+					(list 10 (car FP1) (cadr FP1))
+					(list 10 (car FP2) (cadr FP2))
+					(list 10 (car FP3) (cadr FP3))						
 			));entmake LWPOLYLINE
 		);progn
 	);if
@@ -411,7 +440,7 @@
 	;Осторожно костыль
 	(cond
 		((= sType "LAYER") (setq L_list List_Tible)) ;Если Слои
-	  ((= sType "STYLE") (setq S_list List_Tible)) ;Если стили текста
+	  	((= sType "STYLE") (setq S_list List_Tible)) ;Если стили текста
 	);cond 
 );End List_layer
 
@@ -423,10 +452,10 @@
 (defun Input_Layer_Name(L_Name)
 	(if (or (= L_Name "") (null L_Name))
 	  (progn
-	  	(alert "Введите ИМЯ слоя")					;Флаг запрета 
+	  	(alert "Введите ИМЯ слоя")	;Флаг запрета 
 	  );progn
 	  (progn
-		(setq N_layr L_Name)						;Присвоить имя слоя
+		(setq N_layr L_Name)	       ;Присвоить имя слоя
 	  );progn
 	);if
 );End Input_Diam
@@ -442,7 +471,7 @@
 		(progn(mode_tile "LayerName" 0)(mode_tile "LayerColor" 0))
 	);if
 	(setq N_layr (nth i L_list))
-	(if (= (atoi (get_tile "ListLayer")) 0) (New_Layer N_layr C_layr))	;Создание слоя если истина		
+	(if (= (atoi (get_tile "ListLayer")) 0) (New_Layer N_layr C_layr))	;Создание слоя если истина
 );End Input_Layer
 
 ;===================================================================================================
@@ -508,7 +537,7 @@
 
 (defun Calc_Grad(gType /  tmp)
 	(cond
-		((= gType 1) (setq Grad (rtos (abs (/ Elev Dist))2 4)))				;мм на метр
+		((= gType 1) (setq Grad (rtos (abs (/ Elev Dist))2 3)))				;мм на метр
 		((= gType 2) (setq Grad (rtos (abs (/ Elev Dist))2 2)))				;см на метр
 		((= gType 3) (setq Grad (strcat (rtos (abs (* (/ Elev Dist) 100))2 3)"%")))	;проценты %
 		((= gType 4) (setq Grad (strcat (rtos (abs (* (/ Elev Dist) 1000))2 4)"‰")))	;промили ‰
