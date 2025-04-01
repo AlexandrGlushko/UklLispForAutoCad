@@ -193,6 +193,12 @@
 (defun Enter_Point()
 	(setq P1 (getpoint "Точка 1: "))			;Указание пользователем точки Р1
 	(setq P2 (getpoint "Точка 2: "))			;Указание пользователем точки Р2
+	;Проверка на выбора точек, если точки совпадают, выбираем повторно
+  	(if (= (distance P1 P2) 0)
+	  (progn
+	    	(alert "Точки совпадают \nПовторите выбор!")
+	    	(Enter_Point)
+	    ))
   	(cond
 	  ((= S_prHXY 1)
 	   	(setq Dist (distance P1 P2))			;Расстояние между точками Р1 и Р2
@@ -382,7 +388,7 @@
 								(list 10 (car LP1) (cadr LP1))
 								(list 10 (car LP3) (cadr LP3))
 					));entmake LWPOLYLINE
-				`(entmake (list
+				(entmake (list
 								(cons 0 "LWPOLYLINE")
 								(cons 8 N_layr)
 								(cons 62 C_layr)
