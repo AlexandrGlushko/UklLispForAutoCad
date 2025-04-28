@@ -59,7 +59,7 @@
 		(if (= dcl_id_u -1)
 	  	(progn
 	  	(print) (princ "\nФайл диалогово окна не найден")
-		(Create_dcl_file)
+		(Create_dcl_file) ; Создание диалогового окна при его отсутвии
 	  	(exit))
 	);if dcl_id
   	
@@ -92,7 +92,8 @@
   	(setq result (start_dialog))
   	(cond
 		((= result 1) (Enter_Point))
-		((= result 0) (Exit))
+		((= result 0) (exit))
+		(unload_dialog dcl_id_u)
   	)
   	;Выгрузка диалога и удаление временного файла диалогового окна
 	(unload_dialog dcl_id_u)
@@ -198,7 +199,9 @@
 ;===================================================================================================
 (defun Enter_Point()
 	(setq P1 (getpoint "Точка 1: "))			;Указание пользователем точки Р1
+  	(if (null P1) (Exit)) 					;Выход при отмене
 	(setq P2 (getpoint "Точка 2: "))			;Указание пользователем точки Р2
+  	(if (null P2) (Exit)) 					;Выход при отмене
 	;Проверка на выбора точек, если точки совпадают, выбираем повторно
   	(if (= (distance P1 P2) 0)
 	  (progn
@@ -538,7 +541,7 @@
 	(start_list "ListLayer")(mapcar 'add_list L_list)(end_list) 	;Загрузка списка слоёв в диалог
 	(start_list "ListSText")(mapcar 'add_list S_list)(end_list) 	;Загрузка списка стиелей текста в диалог
 	(set_tile "LayerName" N_layr)					;Надпись в диалоге имя слоя
-	(set_tile "TextHeidht" (rtos H_text))				;Надпись в диалоге высота текста
+	(set_tile "TextHeight" (rtos H_text))				;Надпись в диалоге высота текста
 	
 );End Initialization
 
@@ -649,6 +652,7 @@
 ;===================================================================================================
 
 (defun New_Layer(N_layr C_layr)
+  	(if (not (tblsearch "LAYER" N_layr))	;Проверка на существование слоя
 	(entmake (list
 			(cons 0 "LAYER")
 			(cons 100 "AcDbSymbolTableRecord")
@@ -658,7 +662,7 @@
 			(cons 62 C_layr)
 			(cons 6 "Continuous")
 		);list
-	);entmake
+	));entmake
 );End New_Layer
 
 ;===================================================================================================
