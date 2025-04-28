@@ -88,11 +88,11 @@
 			(action_tile "a1" "(if (= (get_tile \"a1\") \"1\")(setq S_Arrow 1))")
 			(action_tile "a2" "(if (= (get_tile \"a2\") \"1\")(setq S_Arrow 2))")
 			(action_tile "accept" "(done_dialog 1)")
-			(action_tile "cancel" "(done_dialog 2)")
+			(action_tile "cancel" "(done_dialog 0)")
   	(setq result (start_dialog))
   	(cond
 		((= result 1) (Enter_Point))
-		((= result 2) (Exit))
+		((= result 0) (Exit))
   	)
   	;Выгрузка диалога и удаление временного файла диалогового окна
 	(unload_dialog dcl_id_u)
