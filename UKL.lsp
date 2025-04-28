@@ -24,8 +24,8 @@
 			}
 				:boxed_radio_row {label=\"Координата по которой считается разница высот\";
 				:radio_button {label=\"H\"; key=\"prH\"; value=\"0\";}
-				:radio_button {label=\"X\"; key=\"prX\"; value=\"1\";}
-				:radio_button {label=\"Y\"; key=\"prY\"; value=\"0\";}
+				:radio_button {label=\"X\"; key=\"prX\"; value=\"0\";}
+				:radio_button {label=\"Y\"; key=\"prY\"; value=\"1\";}
 				:radio_button {label=\"XY\"; key=\"prXY\"; value=\"0\";}
 			}
 				:boxed_radio_row {label=\"Вид стрелки\";
@@ -111,7 +111,7 @@
 		(setq S_list nil)				;Список стилей текста
 		(setq Grad "")					;Уклон
 		(setq S_Grad 1)					;Стиль отоборажения уклона
-	  	(setq S_prHXY 2)				;Координата для расчета уклона
+	  	(setq S_prHXY 3)				;Координата для расчета уклона
 		(setq S_Arrow 2)				;Стиль стрелки
 		(Dialog)					;Загрузка диалогового окна
 	); progn
