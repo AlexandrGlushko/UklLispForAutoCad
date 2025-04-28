@@ -1,1 +1,2 @@
 ^C^C^P(if (not c:UKL)(load"UKL.lsp"));^PUKL;
+C:\Users\Александр\AppData\Roaming\Autodesk\AutoCAD 2024\R24.3\rus\Support\Icons
