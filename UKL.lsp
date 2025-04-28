@@ -89,11 +89,14 @@
 			(action_tile "a2" "(if (= (get_tile \"a2\") \"1\")(setq S_Arrow 2))")
 			(action_tile "accept" "(done_dialog 1)")
 			(action_tile "cancel" "(done_dialog 2)")
-	(if (= (start_dialog) 1 ) (Enter_Point))
-	(if (= (start_dialog) 2 ) (Exit))
+  	(setq result (start_dialog))
+  	(cond
+		((= result 1) (Enter_Point))
+		((= result 2) (Exit))
+  	)
   	;Выгрузка диалога и удаление временного файла диалогового окна
-  	(vl-file-delete ukl_dcl)
 	(unload_dialog dcl_id_u)
+  	(vl-file-delete ukl_dcl)
 ); End Dialog
 
 ;===================================================================================================
