@@ -24,8 +24,8 @@
 			}
 				:boxed_radio_row {label=\"Координата по которой считается разница высот\";
 				:radio_button {label=\"H\"; key=\"prH\"; value=\"0\";}
-				:radio_button {label=\"X\"; key=\"prX\"; value=\"0\";}
-				:radio_button {label=\"Y\"; key=\"prY\"; value=\"1\";}
+				:radio_button {label=\"X\"; key=\"prX\"; value=\"1\";}
+				:radio_button {label=\"Y\"; key=\"prY\"; value=\"0\";}
 				:radio_button {label=\"XY\"; key=\"prXY\"; value=\"0\";}
 			}
 				:boxed_radio_row {label=\"Вид стрелки\";
@@ -111,7 +111,7 @@
 		(setq S_list nil)				;Список стилей текста
 		(setq Grad "")					;Уклон
 		(setq S_Grad 1)					;Стиль отоборажения уклона
-	  	(setq S_prHXY 3)				;Координата для расчета уклона
+	  	(setq S_prHXY 2)				;Координата для расчета уклона
 		(setq S_Arrow 2)				;Стиль стрелки
 		(Dialog)					;Загрузка диалогового окна
 	); progn
@@ -360,9 +360,62 @@
 						(setq ForLP3 (- DrawAngle (/ PI 2)))
 						(setq PosLP3 "N")	
 					);progn
-				);if (and (< delta_Y 0) (= Firs_Biggest_Second T))
+				);if (and (< delta_X 0) (= Firs_Biggest_Second T))
 			    )
 			);(if (= S_prHXY 3)
+			;Расчет угла для отклонений по X
+		  	(if (= S_prHXY 2)
+			  (progn
+			 	(if (and (> delta_X 0) (= Firs_Biggest_Second T))
+					(progn
+						(print (strcat "Стрелка Влево X+"))
+					  	(setq TextAngle (* PI 2))
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (- TextAngle PI))
+						(setq ForLP3 (+ DrawAngle (/ PI 2)))
+						(setq PosLP3 "N")
+					);progn
+				);if (and (> delta_X 0) (= Firs_Biggest_Second T))
+			 	(if (and (> delta_X 0) (= Firs_Biggest_Second nil))
+					(progn
+						(print (strcat "Стрелка Вправо X+"))
+					  	(setq TextAngle (* PI 2))
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (- TextAngle PI))
+						(setq ForLP3 (+ DrawAngle (/ PI 2)))
+						(setq PosLP3 "R")	
+					);progn
+				);if (and (> delta_X 0) (= Firs_Biggest_Second T))
+		  		(if (and (< delta_X 0) (= Firs_Biggest_Second T))
+					(progn
+						(print (strcat "Стрелка Вправо X-"))
+					  	(setq TextAngle (* PI 2))
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (- TextAngle PI))
+						(setq ForLP3 (+ DrawAngle (/ PI 2)))
+						(setq PosLP3 "R")	
+					);progn
+				);if (and (< delta_X 0) (= Firs_Biggest_Second T))
+			 	(if (and (< delta_X 0) (= Firs_Biggest_Second nil))
+					(progn
+						(print (strcat "Стрелка Влево X-"))
+						(setq TextAngle (* PI 2))
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (+ TextAngle PI))
+						(setq ForLP3 (+ DrawAngle (/ PI 2)))
+						(setq PosLP3 "N")	
+					);progn
+				);if (and (< delta_X 0) (= Firs_Biggest_Second T))
+			    )
+			);(if (= S_prHXY 2)
 		  
 		);Конец блока Расчета угла для отклонений по Y
 	  );(if (or (= S_prHXY 1) (= S_prHXY 4))
