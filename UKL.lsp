@@ -92,8 +92,8 @@
 	(if (= (start_dialog) 1 ) (Enter_Point))
 	(if (= (start_dialog) 2 ) (Exit))
   	;Выгрузка диалога и удаление временного файла диалогового окна
-	(unload_dialog dcl_id_u)
   	(vl-file-delete ukl_dcl)
+	(unload_dialog dcl_id_u)
 ); End Dialog
 
 ;===================================================================================================
