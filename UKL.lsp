@@ -23,9 +23,9 @@
 			
 			}
 				:boxed_radio_row {label=\"Координата по которой считается разница высот\";
-				:radio_button {label=\"H\"; key=\"prH\"; value=\"1\";}
+				:radio_button {label=\"H\"; key=\"prH\"; value=\"0\";}
 				:radio_button {label=\"X\"; key=\"prX\"; value=\"0\";}
-				:radio_button {label=\"Y\"; key=\"prY\"; value=\"0\";}
+				:radio_button {label=\"Y\"; key=\"prY\"; value=\"1\";}
 				:radio_button {label=\"XY\"; key=\"prXY\"; value=\"0\";}
 			}
 				:boxed_radio_row {label=\"Вид стрелки\";
@@ -55,15 +55,15 @@
 ;===================================================================================================
 (defun Dialog()
   	(Create_dcl_file)
-	(setq dcl_id (load_dialog ukl_dcl))
-		(if (= dcl_id -1)
+	(setq dcl_id_u (load_dialog ukl_dcl))
+		(if (= dcl_id_u -1)
 	  	(progn
 	  	(print) (princ "\nФайл диалогово окна не найден")
 		(Create_dcl_file)
 	  	(exit))
 	);if dcl_id
   	
-  	(setq new_dial (new_dialog "dc_ukl" dcl_id))
+  	(setq new_dial (new_dialog "dc_ukl" dcl_id_u))
 	  (if (null new_dial)
 		(progn
 		(print "Не смог загрузить диалоговое окно")
@@ -92,8 +92,8 @@
 	(if (= (start_dialog) 1 ) (Enter_Point))
 	(if (= (start_dialog) 2 ) (Exit))
   	;Выгрузка диалога и удаление временного файла диалогового окна
-	;(unload_dialog dcl_id)
-  	;(vl-file-delete ukl_dcl)
+	(unload_dialog dcl_id_u)
+  	(vl-file-delete ukl_dcl)
 ); End Dialog
 
 ;===================================================================================================
@@ -111,7 +111,7 @@
 		(setq S_list nil)				;Список стилей текста
 		(setq Grad "")					;Уклон
 		(setq S_Grad 1)					;Стиль отоборажения уклона
-	  	(setq S_prHXY 1)				;Координата для расчета уклона
+	  	(setq S_prHXY 3)				;Координата для расчета уклона
 		(setq S_Arrow 2)				;Стиль стрелки
 		(Dialog)					;Загрузка диалогового окна
 	); progn
@@ -214,8 +214,8 @@
 		(setq Elev (- (cadr P1) (cadr P2))))		;Первышение P1 - P2 = Elev по Y
 	  ((= S_prHXY 4)
 	   	(setq Dist (distance P1 P2))			;Расстояние между точками Р1 и Р
-		(setq PE1 (list (car P1) (cadr P1) 0.0))	;Обнуление Н тоски P1
-	   	(setq PE2 (list (car P2) (cadr P2) 0.0))	;Обнуление Н тоски P2
+		(setq PE1 (list (car P1) (cadr P1) 0.0))	;Обнуление Н точки P1
+	   	(setq PE2 (list (car P2) (cadr P2) 0.0))	;Обнуление Н точки P2
 		(setq Elev (distance PE1 PE2)))			;Первышение P1 - P2 = Elev по XY
 	  );S_prHXY	
 	
@@ -250,60 +250,125 @@
 	(setq dX (-(car SecP) (car FirP))) 	; Разность координат точек Р2 и Р1 по Х
 	(setq dY (-(cadr SecP) (cadr FirP)))	; Разность координат точек Р2 и Р1 по Y
 
-	(progn
-		;Первая четверть
-		(if (and (>= dX 0) (>= dY 0))
-			(progn
-				(print (strcat "Певая четверть"))
-				(setq TextAngle (angle FirP SecP))
-			  	(if (= C_WCS 0)
-				  (setq TextAngle (+ TextAngle RotAngleUCS))
-				)
-				(setq DrawAngle (- TextAngle PI))
-				(setq ForLP3 (- DrawAngle (/ PI 2)))
-				(setq PosLP3 "N")
-			);progn
-		);if Первая четверть
-		;Вторая четверть
-		(if (and (>= dX 0) (< dY 0))
-			(progn
-				(print (strcat "Вторая четверть"))
-				(setq TextAngle (angle FirP SecP))
-			  	(if (= C_WCS 0)
-				  (setq TextAngle (+ TextAngle RotAngleUCS))
-				)
-				(setq DrawAngle (- TextAngle PI))
-				(setq ForLP3 (- DrawAngle (/ PI 2)))
-				(setq PosLP3 "N")
-			);progn
-		);if Вторая четверть
-		;Третья четверть
-		(if (and (< dX 0) (< dY 0))
-			(progn
-				(print (strcat "Третья четверть"))
-				(setq TextAngle (angle SecP FirP))
-			  	(if (= C_WCS 0)
-				  (setq TextAngle (+ TextAngle RotAngleUCS))
-				)
-				(setq DrawAngle (+ TextAngle PI))
-				(setq ForLP3 (- DrawAngle (/ PI 2)))
-				(setq PosLP3 "R")
-			);progn
-		);if Третья четверть
-		;Четвертая четверть
-		(if (and (< dX 0) (>= dY 0))
-			(progn
-				(print (strcat "Четвертая четверть"))
-				(setq TextAngle (angle SecP FirP))
-			  	(if (= C_WCS 0)
-				  (setq TextAngle (+ TextAngle RotAngleUCS))
-				)
-				(setq DrawAngle (+ TextAngle PI))
-				(setq ForLP3 (- DrawAngle (/ PI 2)))
-				(setq PosLP3 "R")
-			);progn
-		);if Четвертая четверть
-	);progn
+ 	(if (or (= S_prHXY 1) (= S_prHXY 4))
+		(progn	;Блок расчета углов и координат для точек по H и XY		
+			;Первая четверть
+			(if (and (>= dX 0) (>= dY 0))
+				(progn
+					(print (strcat "Певая четверть"))
+					(setq TextAngle (angle FirP SecP))
+				  	(if (= C_WCS 0)
+					  (setq TextAngle (+ TextAngle RotAngleUCS))
+					)
+					(setq DrawAngle (- TextAngle PI))
+					(setq ForLP3 (- DrawAngle (/ PI 2)))
+					(setq PosLP3 "N")
+				);progn
+			);if Первая четверть
+			;Вторая четверть
+			(if (and (>= dX 0) (< dY 0))
+				(progn
+					(print (strcat "Вторая четверть"))
+					(setq TextAngle (angle FirP SecP))
+				  	(if (= C_WCS 0)
+					  (setq TextAngle (+ TextAngle RotAngleUCS))
+					)
+					(setq DrawAngle (- TextAngle PI))
+					(setq ForLP3 (- DrawAngle (/ PI 2)))
+					(setq PosLP3 "N")
+				);progn
+			);if Вторая четверть
+			;Третья четверть
+			(if (and (< dX 0) (< dY 0))
+				(progn
+					(print (strcat "Третья четверть"))
+					(setq TextAngle (angle SecP FirP))
+				  	(if (= C_WCS 0)
+					  (setq TextAngle (+ TextAngle RotAngleUCS))
+					)
+					(setq DrawAngle (- TextAngle PI))
+					(setq ForLP3 (- DrawAngle (/ PI 2)))
+					(setq PosLP3 "R")
+				);progn
+			);if Третья четверть
+			;Четвертая четверть
+			(if (and (< dX 0) (>= dY 0))
+				(progn
+					(print (strcat "Четвертая четверть"))
+					(setq TextAngle (angle SecP FirP))
+				  	(if (= C_WCS 0)
+					  (setq TextAngle (+ TextAngle RotAngleUCS))
+					)
+					(setq DrawAngle (- TextAngle PI))
+					(setq ForLP3 (- DrawAngle (/ PI 2)))
+					(setq PosLP3 "R")
+				);progn
+			);if Четвертая четверть
+		);Конец Блока расчета углов и координат для точек по H и XY
+
+	  	(progn ;Блок расчет углов и координат для точе Х и Y
+			(setq delta_X (-(car P1) (car P2))) 	; Разность координат точек Р2 и Р1 по Х
+			(setq delta_Y (-(cadr P1) (cadr P2)))	; Разность координат точек Р2 и Р1 по Y
+		  	(setq Firs_Biggest_Second (> (caddr P1) (caddr P2)))
+	  		;Расчет угла для отклонений по Y
+		  	(if (= S_prHXY 3)
+			  (progn
+			 	(if (and (> delta_Y 0) (= Firs_Biggest_Second T))
+					(progn
+						(print (strcat "Стрелка Вниз Y+"))
+					  	(setq TextAngle (/ PI 2))
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (- TextAngle PI))
+						(setq ForLP3 (- DrawAngle (/ PI 2)))
+						(setq PosLP3 "N")
+					);progn
+				);if (and (> delta_Y 0) (= Firs_Biggest_Second T))
+			 	(if (and (> delta_Y 0) (= Firs_Biggest_Second nil))
+					(progn
+						(print (strcat "Стрелка Вниз Y+"))
+					  	(setq TextAngle (/ PI 2))
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (- TextAngle PI))
+						(setq ForLP3 (- DrawAngle (/ PI 2)))
+						(setq PosLP3 "R")	
+					);progn
+				);if (and (> delta_Y 0) (= Firs_Biggest_Second T))
+		  		(if (and (< delta_Y 0) (= Firs_Biggest_Second T))
+					(progn
+						(print (strcat "Стрелка Вверх Y-"))
+					  	(setq TextAngle (/ PI 2))
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (- TextAngle PI))
+						(setq ForLP3 (- DrawAngle (/ PI 2)))
+						(setq PosLP3 "R")	
+					);progn
+				);if (and (< delta_Y 0) (= Firs_Biggest_Second T))
+			 	(if (and (< delta_Y 0) (= Firs_Biggest_Second nil))
+					(progn
+						(print (strcat "Стрелка Вверх Y-"))
+						(setq TextAngle (/ PI 2))
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (- TextAngle PI))
+						(setq ForLP3 (- DrawAngle (/ PI 2)))
+						(setq PosLP3 "N")	
+					);progn
+				);if (and (< delta_Y 0) (= Firs_Biggest_Second T))
+			    )
+			);(if (= S_prHXY 3)
+		  
+		);Конец блока Расчета угла для отклонений по Y
+	  );(if (or (= S_prHXY 1) (= S_prHXY 4))
+
+
+  
 ;===================================================================================================
 ;Вставка текста
 ;===================================================================================================
