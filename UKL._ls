@@ -53,7 +53,6 @@
 ;===================================================================================================
 ; Функция вызова основного диалогового окна
 ;===================================================================================================
-
 (defun Dialog()
   	(Create_dcl_file)
 	(setq dcl_id_u (load_dialog ukl_dcl))
@@ -197,7 +196,6 @@
 ;===================================================================================================
 ;Указание точек для расчета уклона
 ;===================================================================================================
-
 (defun Enter_Point()
 	(setq P1 (getpoint "Точка 1: "))			;Указание пользователем точки Р1
   	(if (null P1) (exit)) 					;Выход при отмене
@@ -233,18 +231,6 @@
 );Enter_Point
 
 ;===================================================================================================
-;Общий блок для расчета углов Текста и Стрелоr в функции Print_Grad()
-;===================================================================================================
-
-(defun AngelsForTextAndDraw()
-	(if (= C_WCS 0)
-		(setq TextAngle (+ TextAngle RotAngleUCS))
-	)
-	(setq DrawAngle (- TextAngle PI))
-	(setq ForLP3 (- DrawAngle (/ PI 2)))
-)
-
-;===================================================================================================
 ;Вывод результатов велечина уклона и стрелка
 ;FirP - точка для отчета потроений при вставке текста и знака уклона (нижняя)
 ;SecP - точка для построения угла (верхняя)
@@ -252,7 +238,6 @@
 ;DrawAngle - угол для отрисовки знака уклона
 ;ForLP3 - значение угла для точки LP3 при постороении знака уклона
 ;===================================================================================================
-
 (defun Print_Grad()
 	;Определение углов поворота текста и направление указания наклона
 	;в зависимоти от первышения (Elev) и разности координат (dX, dY)
@@ -276,36 +261,52 @@
 			;Первая четверть
 			(if (and (>= dX 0) (>= dY 0))
 				(progn
-					;(print (strcat "Певая четверть"))
+					(print (strcat "Певая четверть"))
 					(setq TextAngle (angle FirP SecP))
-				  	(AngelsForTextAndDraw)
+				  	(if (= C_WCS 0)
+					  (setq TextAngle (+ TextAngle RotAngleUCS))
+					)
+					(setq DrawAngle (- TextAngle PI))
+					(setq ForLP3 (- DrawAngle (/ PI 2)))
 					(setq PosLP3 "N")
 				);progn
 			);if Первая четверть
 			;Вторая четверть
 			(if (and (>= dX 0) (< dY 0))
 				(progn
-					;(print (strcat "Вторая четверть"))
+					(print (strcat "Вторая четверть"))
 					(setq TextAngle (angle FirP SecP))
-				  	(AngelsForTextAndDraw)
+				  	(if (= C_WCS 0)
+					  (setq TextAngle (+ TextAngle RotAngleUCS))
+					)
+					(setq DrawAngle (- TextAngle PI))
+					(setq ForLP3 (- DrawAngle (/ PI 2)))
 					(setq PosLP3 "N")
 				);progn
 			);if Вторая четверть
 			;Третья четверть
 			(if (and (< dX 0) (< dY 0))
 				(progn
-					;(print (strcat "Третья четверть"))
+					(print (strcat "Третья четверть"))
 					(setq TextAngle (angle SecP FirP))
-				  	(AngelsForTextAndDraw)
+				  	(if (= C_WCS 0)
+					  (setq TextAngle (+ TextAngle RotAngleUCS))
+					)
+					(setq DrawAngle (- TextAngle PI))
+					(setq ForLP3 (- DrawAngle (/ PI 2)))
 					(setq PosLP3 "R")
 				);progn
 			);if Третья четверть
 			;Четвертая четверть
 			(if (and (< dX 0) (>= dY 0))
 				(progn
-					;(print (strcat "Четвертая четверть"))
+					(print (strcat "Четвертая четверть"))
 					(setq TextAngle (angle SecP FirP))
-				  	(AngelsForTextAndDraw)
+				  	(if (= C_WCS 0)
+					  (setq TextAngle (+ TextAngle RotAngleUCS))
+					)
+					(setq DrawAngle (- TextAngle PI))
+					(setq ForLP3 (- DrawAngle (/ PI 2)))
 					(setq PosLP3 "R")
 				);progn
 			);if Четвертая четверть
@@ -320,71 +321,102 @@
 			  (progn
 			 	(if (and (> delta_Y 0) (= Firs_Biggest_Second T))
 					(progn
-						;(print (strcat "Стрелка Вниз Y+"))
+						(print (strcat "Стрелка Вниз Y+"))
 					  	(setq TextAngle (/ PI 2))
-					  	(AngelsForTextAndDraw)
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (- TextAngle PI))
+						(setq ForLP3 (- DrawAngle (/ PI 2)))
 						(setq PosLP3 "N")
 					);progn
 				);if (and (> delta_Y 0) (= Firs_Biggest_Second T))
 			 	(if (and (> delta_Y 0) (= Firs_Biggest_Second nil))
 					(progn
-						;(print (strcat "Стрелка Вверх Y+"))
+						(print (strcat "Стрелка Вниз Y+"))
 					  	(setq TextAngle (/ PI 2))
-					  	(AngelsForTextAndDraw)
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (- TextAngle PI))
+						(setq ForLP3 (- DrawAngle (/ PI 2)))
 						(setq PosLP3 "R")	
 					);progn
 				);if (and (> delta_Y 0) (= Firs_Biggest_Second T))
 		  		(if (and (< delta_Y 0) (= Firs_Biggest_Second T))
 					(progn
-						;(print (strcat "Стрелка Вверх Y-"))
+						(print (strcat "Стрелка Вверх Y-"))
 					  	(setq TextAngle (/ PI 2))
-					  	(AngelsForTextAndDraw)
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (- TextAngle PI))
+						(setq ForLP3 (- DrawAngle (/ PI 2)))
 						(setq PosLP3 "R")	
 					);progn
 				);if (and (< delta_Y 0) (= Firs_Biggest_Second T))
 			 	(if (and (< delta_Y 0) (= Firs_Biggest_Second nil))
 					(progn
-						;(print (strcat "Стрелка Вниз Y-"))
+						(print (strcat "Стрелка Вверх Y-"))
 						(setq TextAngle (/ PI 2))
-					  	(AngelsForTextAndDraw)
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (- TextAngle PI))
+						(setq ForLP3 (- DrawAngle (/ PI 2)))
 						(setq PosLP3 "N")	
 					);progn
 				);if (and (< delta_X 0) (= Firs_Biggest_Second T))
 			    )
 			);(if (= S_prHXY 3)
-		  
 			;Расчет угла для отклонений по X
 		  	(if (= S_prHXY 2)
 			  (progn
 			 	(if (and (> delta_X 0) (= Firs_Biggest_Second T))
 					(progn
-						;(print (strcat "Стрелка Влево X+"))
+						(print (strcat "Стрелка Влево X+"))
 					  	(setq TextAngle (* PI 2))
-					  	(AngelsForTextAndDraw)
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (- TextAngle PI))
+						(setq ForLP3 (+ DrawAngle (/ PI 2)))
 						(setq PosLP3 "N")
 					);progn
 				);if (and (> delta_X 0) (= Firs_Biggest_Second T))
 			 	(if (and (> delta_X 0) (= Firs_Biggest_Second nil))
 					(progn
-						;(print (strcat "Стрелка Вправо X+"))
+						(print (strcat "Стрелка Вправо X+"))
 					  	(setq TextAngle (* PI 2))
-					  	(AngelsForTextAndDraw)
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (- TextAngle PI))
+						(setq ForLP3 (+ DrawAngle (/ PI 2)))
 						(setq PosLP3 "R")	
 					);progn
 				);if (and (> delta_X 0) (= Firs_Biggest_Second T))
 		  		(if (and (< delta_X 0) (= Firs_Biggest_Second T))
 					(progn
-						;(print (strcat "Стрелка Вправо X-"))
+						(print (strcat "Стрелка Вправо X-"))
 					  	(setq TextAngle (* PI 2))
-					  	(AngelsForTextAndDraw)
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (- TextAngle PI))
+						(setq ForLP3 (+ DrawAngle (/ PI 2)))
 						(setq PosLP3 "R")	
 					);progn
 				);if (and (< delta_X 0) (= Firs_Biggest_Second T))
 			 	(if (and (< delta_X 0) (= Firs_Biggest_Second nil))
 					(progn
-						;(print (strcat "Стрелка Влево X-"))
+						(print (strcat "Стрелка Влево X-"))
 						(setq TextAngle (* PI 2))
-					  	(AngelsForTextAndDraw)
+					  	(if (= C_WCS 0)
+						  (setq TextAngle (+ TextAngle RotAngleUCS))
+						)
+						(setq DrawAngle (+ TextAngle PI))
+						(setq ForLP3 (+ DrawAngle (/ PI 2)))
 						(setq PosLP3 "N")	
 					);progn
 				);if (and (< delta_X 0) (= Firs_Biggest_Second T))
@@ -394,11 +426,13 @@
 		);Конец блока Расчета угла для отклонений по Y
 	  );(if (or (= S_prHXY 1) (= S_prHXY 4))
 
+
+  
 ;===================================================================================================
 ;Вставка текста
 ;===================================================================================================
 	; Вставка текста отклонения 
-	(setq XYZ (getpoint "Точка вставки\n"))
+	(setq XYZ (getpoint "Точка вставки "))
 	(if (null XYZ) (exit)
 	  (progn
 	  	(if (= C_WCS 0)				
@@ -418,7 +452,6 @@
 				(cons 72 1);Выравникание по горизонтали 
 				(cons 73 1);Выравнивание по вертикали
 	))));entmake TEXT
-  
 ;===================================================================================================
 ;Блок расчета данных для отрисовки полилинии
 ;Координтаы вставки текста
@@ -474,29 +507,30 @@
 			(setq LP2 (polar LP1 (+ DrawAngle (+ PI(/ PI 6))) (* H_text 1.5)))
 			(setq LP3 (polar LP1 (- DrawAngle (+ PI(/ PI 6))) (* H_text 1.5)))
 				(entmake (list
-						(cons 0 "LWPOLYLINE")
-						(cons 8 N_layr)
-						(cons 62 C_layr)
-						(cons 100 "AcDbEntity")
-						(cons 100 "AcDbPolyline")
-						(cons 90 3)
-						(list 10 (car LP2) (cadr LP2))
-						(list 10 (car LP1) (cadr LP1))
-						(list 10 (car LP3) (cadr LP3))
+								(cons 0 "LWPOLYLINE")
+								(cons 8 N_layr)
+								(cons 62 C_layr)
+								(cons 100 "AcDbEntity")
+								(cons 100 "AcDbPolyline")
+								(cons 90 3)
+								(list 10 (car LP2) (cadr LP2))
+								(list 10 (car LP1) (cadr LP1))
+								(list 10 (car LP3) (cadr LP3))
 					));entmake LWPOLYLINE
 				(entmake (list
-						(cons 0 "LWPOLYLINE")
-						(cons 8 N_layr)
-						(cons 62 C_layr)
-						(cons 100 "AcDbEntity")
-						(cons 100 "AcDbPolyline")
-						(cons 90 3)
-						(list 10 (car LP1) (cadr LP1))
-						(list 10 (car PosText) (cadr PosText))
+								(cons 0 "LWPOLYLINE")
+								(cons 8 N_layr)
+								(cons 62 C_layr)
+								(cons 100 "AcDbEntity")
+								(cons 100 "AcDbPolyline")
+								(cons 90 3)
+								(list 10 (car LP1) (cadr LP1))
+								(list 10 (car PosText) (cadr PosText))
 					));entmake LWPOLYLINE
 		);progn
 	 );if 
 );Print_Grand
+
 
 ;===================================================================================================
 ;Функция ввода и проверки начальных значений
@@ -572,7 +606,7 @@
 		(progn(mode_tile "LayerName" 0)(mode_tile "LayerColor" 0))
 	);if
 	(setq N_layr (nth i L_list))
-	(if (= (atoi (get_tile "ListLayer")) 0) (New_Layer N_layr C_layr));Создание слоя если истина
+	(if (= (atoi (get_tile "ListLayer")) 0) (New_Layer N_layr C_layr))	;Создание слоя если истина
 );End Input_Layer
 
 ;===================================================================================================
